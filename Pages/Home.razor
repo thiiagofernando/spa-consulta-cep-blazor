@@ -103,7 +103,7 @@
             }
             catch (Exception ex)
             {
-                mensagemErro = "Falha ao consular o cep!";
+                mensagemErro = $"Falha ao consular o cep, ${ex.Message}";
                 await ShowLazyModal();
             }
         }
