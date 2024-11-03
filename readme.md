@@ -7,3 +7,8 @@
  * C# com .NET 8
  * Blazor
  * Blazorise com Bootstrap 5
+
+##
+![Logo](ConsultaRetornandoCEP.png)
+##
+![Logo](ConsultaNaoRetornandoCEP.png)
