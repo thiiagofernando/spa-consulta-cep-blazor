@@ -1,0 +1,131 @@
+﻿@page "/"
+@using Blazorise
+@using System.Net.Http.Json
+@inject HttpClient Http
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="input-group mb-3">
+                <NumericEdit TValue="int?"
+                             Placeholder="Informe o seu CEP"
+                             @bind-Value="@cep"
+                             Min="0"
+                             Class="form-control"
+                             Max="99999999" />
+                <Button Color="Color.Primary"
+                        Clicked="@ConsultarCep"
+                        Disabled="@(!cep.HasValue)">
+                    Consultar
+                </Button>
+            </div>
+        </div>
+    </div>
+    @if (endereco?.Cep != null)
+    {
+        <div class="row mt-3">
+            <div class="col-md-8">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHeaderCell>Campo</TableHeaderCell>
+                            <TableHeaderCell>Valor</TableHeaderCell>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        <TableRow>
+                            <TableRowCell>CEP</TableRowCell>
+                            <TableRowCell>@endereco.Cep</TableRowCell>
+                        </TableRow>
+                        <TableRow>
+                            <TableRowCell>Logradouro</TableRowCell>
+                            <TableRowCell>@endereco.Logradouro</TableRowCell>
+                        </TableRow>
+                        <TableRow>
+                            <TableRowCell>Bairro</TableRowCell>
+                            <TableRowCell>@endereco.Bairro</TableRowCell>
+                        </TableRow>
+                        <TableRow>
+                            <TableRowCell>Cidade</TableRowCell>
+                            <TableRowCell>@endereco.Localidade</TableRowCell>
+                        </TableRow>
+                        <TableRow>
+                            <TableRowCell>Estado</TableRowCell>
+                            <TableRowCell>@endereco.Uf</TableRowCell>
+                        </TableRow>
+                    </TableBody>
+                </Table>
+            </div>
+        </div>
+    }
+</div>
+<Modal @ref="lazyModalRef" Animated="animation" AnimationDuration="animationDuration" RenderMode="ModalRenderMode.LazyLoad">
+    <ModalContent Size="ModalSize.Small" Centered>
+        <ModalHeader>
+            <ModalTitle>
+                Atenção!!
+            </ModalTitle>
+            <CloseButton />
+        </ModalHeader>
+        <ModalBody>
+            <Paragraph>
+                @mensagemErro
+            </Paragraph>
+        </ModalBody>
+        <ModalFooter>
+            <Button Color="Color.Secondary" Clicked="@HideLazyModal">Fechar</Button>
+        </ModalFooter>
+    </ModalContent>
+</Modal>
+
+@code {
+    private int? cep;
+    private Endereco? endereco;
+    private string mensagemErro = string.Empty;
+    private Modal lazyModalRef;
+    private bool animation = true;
+    private int animationDuration = 150;
+
+    private async Task ConsultarCep()
+    {
+        if (cep.HasValue)
+        {
+            try
+            {
+                string cepFormatado = cep.Value.ToString().PadLeft(8, '0');
+                endereco = await Http.GetFromJsonAsync<Endereco>($"https://viacep.com.br/ws/{cepFormatado}/json/");
+                if (endereco?.Cep is null)
+                {
+                    mensagemErro = "Nenhum endereço foi encontrado com o CEP informado.";
+                    await ShowLazyModal();
+                }
+
+            }
+            catch (Exception ex)
+            {
+                mensagemErro = "Falha ao consular o cep!";
+                await ShowLazyModal();
+            }
+        }
+    }
+    private Task ShowLazyModal()
+    {
+        return lazyModalRef.Show();
+    }
+
+    private Task HideLazyModal()
+    {
+        mensagemErro = string.Empty;
+        return lazyModalRef.Hide();
+    }
+
+    public class Endereco
+    {
+        public string? Cep { get; set; }
+        public string? Logradouro { get; set; }
+        public string? Complemento { get; set; }
+        public string? Bairro { get; set; }
+        public string? Localidade { get; set; }
+        public string? Uf { get; set; }
+    }
+}
